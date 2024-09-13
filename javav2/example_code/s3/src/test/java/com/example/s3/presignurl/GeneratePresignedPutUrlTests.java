@@ -55,7 +55,7 @@ class GeneratePresignedPutUrlTests {
     void testCreatePresignedUrlWithMetadataInHeaderForPut() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
 
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedPutUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
         Assertions.assertTrue(presignedUrlString.contains(METADATA.keySet().iterator().next()));
     }
 
@@ -63,7 +63,7 @@ class GeneratePresignedPutUrlTests {
     @Tag("IntegrationTest")
     void testPutWithMetadataInHeaderUsingHttpUrlConnection() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedPutUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
 
         presignInstanceUnderTest.useHttpUrlConnectionToPut(presignedUrlString, PDF_FILE, METADATA);
         Assertions.assertTrue(objectHasMetadata());
@@ -75,7 +75,7 @@ class GeneratePresignedPutUrlTests {
     @Tag("IntegrationTest")
     void testPutWithMetadataInHeaderUsingSdkHttpClient() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedPutUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
 
         try {
             presignInstanceUnderTest.useSdkHttpClientToPut(presignedUrlString, PDF_FILE, METADATA);
@@ -91,7 +91,7 @@ class GeneratePresignedPutUrlTests {
     @Tag("IntegrationTest")
     void testPutWithMetadataInHeaderUsingJdkHttpClient() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedPutUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
 
         presignInstanceUnderTest.useHttpClientToPut(presignedUrlString, PDF_FILE, METADATA);
         Assertions.assertTrue(objectHasMetadata());

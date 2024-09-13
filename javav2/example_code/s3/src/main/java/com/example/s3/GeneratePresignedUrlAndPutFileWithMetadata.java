@@ -68,7 +68,7 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
         PresignUrlUtils.createBucket(bucketName, s3Client);
         GeneratePresignedUrlAndPutFileWithMetadata presign = new GeneratePresignedUrlAndPutFileWithMetadata();
         try {
-            String presignedUrlString = presign.createPresignedUrlWithMetadataInHeader(bucketName, keyName, metadata);
+            String presignedUrlString = presign.createPresignedPutUrlWithMetadataInHeader(bucketName, keyName, metadata);
 
             presign.useHttpUrlConnectionToPut(presignedUrlString, getFileForForClasspathResource(resourcePath), metadata);
             PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
@@ -84,7 +84,6 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
             PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
 
             presign.useSdkHttpClientToPutWithQueryParams(presignedUrlUsingQueryParams, getFileForForClasspathResource(resourcePath));
-            PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
 
 
         } finally {
@@ -96,7 +95,7 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
     // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.main]
     // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.createpresignedurl]
     /* Create a presigned URL to use in a subsequent PUT request */
-    public String createPresignedUrlWithMetadataInHeader(String bucketName, String keyName, Map<String, String> metadata) {
+    public String createPresignedPutUrlWithMetadataInHeader(String bucketName, String keyName, Map<String, String> metadata) {
         try (S3Presigner presigner = S3Presigner.create()) {
 
             PutObjectRequest objectRequest = PutObjectRequest.builder()
