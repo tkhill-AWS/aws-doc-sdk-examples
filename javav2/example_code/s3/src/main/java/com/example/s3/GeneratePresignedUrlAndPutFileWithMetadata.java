@@ -6,6 +6,7 @@ package com.example.s3;
 // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.import]
 import com.example.s3.util.PresignUrlUtils;
 import org.slf4j.Logger;
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
 import software.amazon.awssdk.core.internal.sync.FileContentStreamProvider;
 import software.amazon.awssdk.http.HttpExecuteRequest;
 import software.amazon.awssdk.http.HttpExecuteResponse;
@@ -67,7 +68,7 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
         PresignUrlUtils.createBucket(bucketName, s3Client);
         GeneratePresignedUrlAndPutFileWithMetadata presign = new GeneratePresignedUrlAndPutFileWithMetadata();
         try {
-            String presignedUrlString = presign.createPresignedUrl(bucketName, keyName, metadata);
+            String presignedUrlString = presign.createPresignedUrlWithMetadataInHeader(bucketName, keyName, metadata);
 
             presign.useHttpUrlConnectionToPut(presignedUrlString, getFileForForClasspathResource(resourcePath), metadata);
             PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
@@ -76,6 +77,14 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
             PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
 
             presign.useSdkHttpClientToPut(presignedUrlString, getFileForForClasspathResource(resourcePath), metadata);
+            PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
+
+            // Use query parameter instead of header for metadata
+            String presignedUrlUsingQueryParams = presign.createPresignedPutUrlWithMetadataInQueryParam(bucketName, keyName, metadata);
+            PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
+
+            presign.useSdkHttpClientToPutWithQueryParams(presignedUrlUsingQueryParams, getFileForForClasspathResource(resourcePath));
+            PresignUrlUtils.deleteObject(bucketName, keyName, s3Client);
 
 
         } finally {
@@ -87,7 +96,7 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
     // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.main]
     // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.createpresignedurl]
     /* Create a presigned URL to use in a subsequent PUT request */
-    public String createPresignedUrl(String bucketName, String keyName, Map<String, String> metadata) {
+    public String createPresignedUrlWithMetadataInHeader(String bucketName, String keyName, Map<String, String> metadata) {
         try (S3Presigner presigner = S3Presigner.create()) {
 
             PutObjectRequest objectRequest = PutObjectRequest.builder()
@@ -111,6 +120,50 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
         }
     }
     // snippet-end:[presigned.java2.generatepresignedurlandputfilewithmetadata.createpresignedurl]
+
+    // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.createpresignedurl-metadata-in-query-params]
+
+    /**
+     * This method creates a presigned URL for a PUT request that uses query parameters instead of headers to
+     * transfer the metadata for the object. When you use query parameters instead of headers,
+     * you do not need to add the headers during the HTTP put request that uses the presigned URL.
+     *
+     * @param bucketName Bucket name that receives object.
+     * @param key Key the object is stored under.
+     * @param metadata Metadata to store with the object.
+     * @return
+     */
+    public String createPresignedPutUrlWithMetadataInQueryParam(String bucketName, String key, Map<String, String> metadata) {
+        try (S3Presigner presigner = S3Presigner.create()) {
+
+            // Use the AwsRequestOverrideConfiguration to add the raw query parameter. To transfer metadata,
+            // the key parameter name begins with "x-amz-meta-".
+            AwsRequestOverrideConfiguration.Builder builder = AwsRequestOverrideConfiguration.builder();
+            metadata.forEach( (k, v) -> builder.putRawQueryParameter("x-amz-meta-" + k, v));
+            AwsRequestOverrideConfiguration requestOverrideConfiguration = builder.build();
+
+            // Add the override configuration to the put object request.
+            PutObjectRequest objectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .overrideConfiguration(requestOverrideConfiguration)
+                    .build();
+
+            PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(10))  // The URL expires in 10 minutes.
+                    .putObjectRequest(objectRequest)
+                    .build();
+
+
+            PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(presignRequest);
+            String myURL = presignedRequest.url().toString();
+            logger.info("Presigned URL to upload a file to: [{}]", myURL);
+            logger.info("HTTP method: [{}]", presignedRequest.httpRequest().method());
+
+            return presignedRequest.url().toExternalForm();
+        }
+    }
+    // snippet-end:[presigned.java2.generatepresignedurlandputfilewithmetadata.createpresignedurl-metadata-in-query-params]
 
     // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.basichttpclient]
     /* Use the JDK HttpURLConnection (since v1.1) class to do the upload. */
@@ -203,6 +256,37 @@ public class GeneratePresignedUrlAndPutFileWithMetadata {
         }
     }
     // snippet-end:[presigned.java2.generatepresignedurlandputfilewithmetadata.sdkhttpclient]
+
+    // snippet-start:[presigned.java2.generatepresignedurlandputfilewithmetadata.sdkhttpclient]
+    /* Use the AWS SDK for Java V2 SdkHttpClient class to do the upload. */
+    public void useSdkHttpClientToPutWithQueryParams(String presignedUrlString, File fileToPut) {
+        logger.info("Begin [{}] upload", fileToPut.toString());
+
+        try {
+            URL presignedUrl = new URL(presignedUrlString);
+
+            SdkHttpRequest.Builder requestBuilder = SdkHttpRequest.builder()
+                    .method(SdkHttpMethod.PUT)
+                    .uri(presignedUrl.toURI());
+
+            // Finish building the request.
+            SdkHttpRequest request = requestBuilder.build();
+
+            HttpExecuteRequest executeRequest = HttpExecuteRequest.builder()
+                    .request(request)
+                    .contentStreamProvider(new FileContentStreamProvider(fileToPut.toPath()))
+                    .build();
+
+            try (SdkHttpClient sdkHttpClient = ApacheHttpClient.create()) {
+                HttpExecuteResponse response = sdkHttpClient.prepareRequest(executeRequest).call();
+                logger.info("Response code: {}", response.httpResponse().statusCode());
+            }
+        } catch (URISyntaxException | IOException e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
+    // snippet-end:[presigned.java2.generatepresignedurlandputfilewithmetadata.sdkhttpclient]
+
     // snippet-end:[presigned.java2.generatepresignedurlandputfilewithmetadata.main]
 
     public static File getFileForForClasspathResource(String resourcePath) {

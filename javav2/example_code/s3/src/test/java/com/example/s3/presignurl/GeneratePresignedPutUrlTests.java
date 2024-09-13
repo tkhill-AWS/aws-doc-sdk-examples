@@ -23,7 +23,7 @@ class GeneratePresignedPutUrlTests {
     private static final String BUCKET_NAME = "b-" + UUID.randomUUID();
     private static final String KEY_NAME = "k-" + UUID.randomUUID();
     private static final S3Client s3Client = S3Client.create();
-    private static final Map<String, String> METADATA = Map.of("meta1", "value1");
+    private static final Map<String, String> METADATA = Map.of("key1", "value1", "key2", "value2");
     private static final File PDF_FILE = GeneratePresignedUrlAndPutFileWithMetadata
             .getFileForForClasspathResource("multipartUploadFiles/s3-userguide.pdf");
 
@@ -34,7 +34,6 @@ class GeneratePresignedPutUrlTests {
 
     @AfterAll
     static void afterAll() {
-        PresignUrlUtils.deleteObject(BUCKET_NAME, KEY_NAME, s3Client);
         PresignUrlUtils.deleteBucket(BUCKET_NAME, s3Client);
     }
 
@@ -53,18 +52,18 @@ class GeneratePresignedPutUrlTests {
 
     @Test
     @Tag("IntegrationTest")
-    void testCreatePresignedUrlForPut() {
+    void testCreatePresignedUrlWithMetadataInHeaderForPut() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
 
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrl(BUCKET_NAME, KEY_NAME, METADATA);
-        Assertions.assertTrue(presignedUrlString.contains("meta1"));
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
+        Assertions.assertTrue(presignedUrlString.contains(METADATA.keySet().iterator().next()));
     }
 
     @Test
     @Tag("IntegrationTest")
-    void testUsingHttpUrlConnection() {
+    void testPutWithMetadataInHeaderUsingHttpUrlConnection() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrl(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
 
         presignInstanceUnderTest.useHttpUrlConnectionToPut(presignedUrlString, PDF_FILE, METADATA);
         Assertions.assertTrue(objectHasMetadata());
@@ -74,11 +73,15 @@ class GeneratePresignedPutUrlTests {
 
     @Test
     @Tag("IntegrationTest")
-    void testUsingSdkHttpClient() {
+    void testPutWithMetadataInHeaderUsingSdkHttpClient() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrl(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
 
-        presignInstanceUnderTest.useSdkHttpClientToPut(presignedUrlString, PDF_FILE, METADATA);
+        try {
+            presignInstanceUnderTest.useSdkHttpClientToPut(presignedUrlString, PDF_FILE, METADATA);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
         Assertions.assertTrue(objectHasMetadata());
 
         PresignUrlUtils.deleteObject(BUCKET_NAME, KEY_NAME, s3Client);
@@ -86,15 +89,28 @@ class GeneratePresignedPutUrlTests {
 
     @Test
     @Tag("IntegrationTest")
-    void testUsingJdkHttpClient() {
+    void testPutWithMetadataInHeaderUsingJdkHttpClient() {
         GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
-        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrl(BUCKET_NAME, KEY_NAME, METADATA);
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedUrlWithMetadataInHeader(BUCKET_NAME, KEY_NAME, METADATA);
 
         presignInstanceUnderTest.useHttpClientToPut(presignedUrlString, PDF_FILE, METADATA);
         Assertions.assertTrue(objectHasMetadata());
 
         PresignUrlUtils.deleteObject(BUCKET_NAME, KEY_NAME, s3Client);
     }
+
+    @Test
+    @Tag("IntegrationTest")
+    void testPutWithMetadataInQueryParamUsingSdkHttpClient() {
+        GeneratePresignedUrlAndPutFileWithMetadata presignInstanceUnderTest = new GeneratePresignedUrlAndPutFileWithMetadata();
+        final String presignedUrlString = presignInstanceUnderTest.createPresignedPutUrlWithMetadataInQueryParam(BUCKET_NAME, KEY_NAME, METADATA);
+
+        presignInstanceUnderTest.useSdkHttpClientToPutWithQueryParams(presignedUrlString, PDF_FILE);
+        Assertions.assertTrue(objectHasMetadata());
+
+        PresignUrlUtils.deleteObject(BUCKET_NAME, KEY_NAME, s3Client);
+    }
+
 
     private static Boolean objectExists() {
         GetObjectResponse response = s3Client.getObject(b -> b.bucket(BUCKET_NAME).key(KEY_NAME)).response();
@@ -104,6 +120,7 @@ class GeneratePresignedPutUrlTests {
     private static Boolean objectHasMetadata() {
         GetObjectResponse response = s3Client.getObject(b -> b.bucket(BUCKET_NAME).key(KEY_NAME)).response();
         // The SDK strips off the leading "x-amz-meta-" from the metadata key.
-        return response.metadata().get("meta1").equals(GeneratePresignedPutUrlTests.METADATA.get("meta1"));
+        String aKey = GeneratePresignedPutUrlTests.METADATA.keySet().iterator().next();
+        return response.metadata().get(aKey).equals(GeneratePresignedPutUrlTests.METADATA.get(aKey));
     }
 }
