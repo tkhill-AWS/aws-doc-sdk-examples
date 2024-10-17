@@ -2,7 +2,6 @@ package com.example.sqs.batch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.client.config.SdkAdvancedAsyncClientOption;
 import software.amazon.awssdk.core.interceptor.Context;
 import software.amazon.awssdk.core.interceptor.ExecutionAttributes;
 import software.amazon.awssdk.core.interceptor.ExecutionInterceptor;
@@ -14,7 +13,7 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.QueueDeletedRecentlyException;
 import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
-import software.amazon.awssdk.services.sqs.model.QueueNameExistsException;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
@@ -26,10 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.stream.IntStream;
 
 public class SqsAsyncBatchManagerExamples {
     private static final Logger logger = LoggerFactory.getLogger(SqsAsyncBatchManagerExamples.class);
@@ -46,14 +42,14 @@ public class SqsAsyncBatchManagerExamples {
             .scheduledExecutor(Executors.newScheduledThreadPool(SCHEDULED_THREAD_POOL_SIZE))
             .overrideConfiguration(b -> b
                     .maxBatchSize(9)
-                    .sendRequestFrequency(Duration.ofSeconds(1))
+                //    .sendRequestFrequency(Duration.ofSeconds(1))
             ).build();
     private static final Boolean CREATE_QUEUE = true;
     private static final Boolean DELETE_QUEUE = true;
-    private static final Integer MESSAGE_COUNT = 50;
+    private static final Integer MESSAGE_COUNT = 40;
     private static Integer RECEIVED_COUNT = 0;
     static List<String> receiptHandles = new ArrayList<>();
-    static final Integer VISIBILITY_TIMEOUT = 200;
+    static final Integer VISIBILITY_TIMEOUT = 2000;
 
     public static void main(String[] args) {
         if (CREATE_QUEUE) {
@@ -72,24 +68,42 @@ public class SqsAsyncBatchManagerExamples {
         }
         sendMessages(MESSAGE_COUNT);
         try {
-            Thread.sleep(45_000);
+            logger.info("End sending.");
+            Thread.sleep(2_000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
         Integer loopCounter = 1;
         while (RECEIVED_COUNT < MESSAGE_COUNT) {
-            logger.info("Loop countdown: {}", loopCounter);
-            receiveMessages().join();
+        //    logger.info("Loop countdown: {}", loopCounter);
+            receiveMessages();
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            loopCounter++;
+        //    loopCounter++;
+        }
+        try {
+            Thread.sleep(30_000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
-        changeVisiblityTimeout(receiptHandles, queueUrl, VISIBILITY_TIMEOUT);
+
+        for (String receiptHandle : receiptHandles) {
+            batchChangeVisiblityTimeout(receiptHandle, queueUrl, VISIBILITY_TIMEOUT);
+        }
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (String receiptHandle : receiptHandles) {
+            batchDeleteMessage(receiptHandle, queueUrl);
+        }
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -124,12 +138,12 @@ public class SqsAsyncBatchManagerExamples {
 */
         for (int i = 0; i < count; i++) {
             logger.info("sending single message {}", i);
-            sendMyMessage("Message " + i, queueUrl);
-            try {
+            batchSendMessage("Message " + i, queueUrl);
+/*            try {
                 Thread.sleep(400);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
-            }
+            }*/
         }
     }
 
@@ -139,7 +153,7 @@ public class SqsAsyncBatchManagerExamples {
                 .messageBody(messageBody));
     }
 
-    static void sendMyMessage(String messageBody, String queueUrl){
+    static void batchSendMessage(String messageBody, String queueUrl){
         sqsAsyncBatchManager.sendMessage(r -> r
                 .queueUrl(queueUrl)
                 .messageBody(messageBody))
@@ -152,39 +166,81 @@ public class SqsAsyncBatchManagerExamples {
                 });
     }
 
-    static CompletableFuture<ReceiveMessageResponse> receiveMessages(){
+    static CompletableFuture<ReceiveMessageResponse> receiveMessages() {
         return sqsAsyncBatchManager.receiveMessage(r -> r
                         .queueUrl(queueUrl)
-                )
-                .whenComplete( (response, err) -> {
+                        .waitTimeSeconds(1)
+                        .maxNumberOfMessages(8)
+                        .visibilityTimeout(300))
+                .whenComplete((response, err) -> {
                     if (err != null) {
                         logger.error("Error sending message: {}", err.getCause().getMessage());
                     } else {
                         RECEIVED_COUNT += response.messages().size();
                         logger.info("Received {} messages", response.messages().size());
                         logger.info("Total messages received: {}", RECEIVED_COUNT);
-                        for (Message singleResponse : response.messages()){
-                            logger.info("ReceiptHandle: {}", singleResponse.receiptHandle());
+                        for (Message singleResponse : response.messages()) {
+                            logger.info("ReceiptHandle: {}", singleResponse.receiptHandle().substring(0, 10));
                             receiptHandles.add(singleResponse.receiptHandle());
                         }
                     }
                 });
     }
 
-    static void changeVisiblityTimeout(List<String> receiptHandles, String queueUrl, Integer visibilityTimeout) {
-        receiptHandles.forEach(rh -> {
-            sqsAsyncBatchManager.changeMessageVisibility(r -> r
-                            .receiptHandle(rh)
-                            .queueUrl(queueUrl)
-                            .visibilityTimeout(visibilityTimeout))
-                    .whenComplete((resp, err) -> {
-                        if (err != null) {
-                            logger.error("Error changing visibility timeout: {}", err.getCause().getMessage());
-                        } else {
-                            logger.info("Visibility timeout changed successfully for {}", rh);
+    static void batchReceiveMessages() {
+        sqsAsyncBatchManager.receiveMessage(r -> r.queueUrl(queueUrl))
+                .whenComplete((response, err) -> {
+                    if (err != null) {
+                        logger.error("Error receiving messages: {}", err.getCause().getMessage());
+                    } else {
+                        for (Message singleResponse : response.messages()) {
+                            logger.info("ReceiptHandle: {}", singleResponse.receiptHandle().substring(0, 10));
                         }
-                    });
-        });
+                    }
+                });
+    }
+
+    static void batchCustomReceiveMessages() {
+        sqsAsyncBatchManager.receiveMessage(r -> r
+                        .queueUrl(queueUrl)
+                        .waitTimeSeconds(1)
+                        .maxNumberOfMessages(7))
+                .whenComplete((response, err) -> {
+                    if (err != null) {
+                        logger.error("Error receiving messages: {}", err.getCause().getMessage());
+                    } else {
+                        for (Message singleResponse : response.messages()) {
+                            logger.info("ReceiptHandle: {}", singleResponse.receiptHandle().substring(0, 10));
+                        }
+                    }
+                });
+    }
+
+    static void batchChangeVisiblityTimeout(String receiptHandle, String queueUrl, Integer visibilityTimeout) {
+        sqsAsyncBatchManager.changeMessageVisibility(r -> r
+                        .receiptHandle(receiptHandle)
+                        .queueUrl(queueUrl)
+                        .visibilityTimeout(visibilityTimeout))
+                .whenComplete((resp, err) -> {
+                    if (err != null) {
+                        logger.error("Error changing visibility timeout: {}", err.getCause().getMessage());
+                    } else {
+                        logger.info("Visibility timeout changed successfully for {}", receiptHandle);
+                    }
+                });
+    }
+
+    static void batchDeleteMessage(String receiptHandle, String queueUrl) {
+        sqsAsyncBatchManager.deleteMessage(r -> r
+                        .receiptHandle(receiptHandle)
+                        .queueUrl(queueUrl))
+                .whenComplete((resp, err) -> {
+                    if (err != null) {
+                        logger.error("Error changing visibility timeout: {}", err.getCause().getMessage());
+                    } else {
+                        logger.info("Message deleted successfully");
+                    }
+                });
     }
 
     static CompletableFuture<String> createQueue() {
@@ -221,6 +277,15 @@ public class SqsAsyncBatchManagerExamples {
                 logger.info("Before batch send execution- sending {}", batchRequest.entries().size());
             } else if (context.request() instanceof ChangeMessageVisibilityBatchRequest changeVisibility) {
                 logger.info("Before change visibility execution- sending {}", changeVisibility.entries().size());
+            } else if (context.request() instanceof ReceiveMessageRequest receiveRequest) {
+                logger.info("Before receive message execution.");
+            }
+        }
+
+        @Override
+        public void afterExecution(Context.AfterExecution context, ExecutionAttributes executionAttributes) {
+            if (context.response() instanceof ReceiveMessageResponse receiveResponse) {
+                logger.info("After receive message execution- received {}", receiveResponse.messages().size());
             }
         }
     }
