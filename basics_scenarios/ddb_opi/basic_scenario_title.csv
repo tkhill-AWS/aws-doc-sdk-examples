@@ -1,0 +1,11 @@
+github_folder_name,service,containing_folder,abbrev_title,title
+batch_scenario,AWS Batch,Scenarios,Learn AWS Batch core operations,Learn core operations for'AWS Batch using an AWS SDK
+ecr_scenario,AWS ECR,Basics,Learn the basics,Learn the basics of Amazon ECR with an AWS SDK
+iot_scenario,AWS IoT,Basics,Learn the basics,Learn the basics of AWS IoT with an AWS SDK
+kms_scenario,AWS KMS,Basics,Learn the basics,Learn the basics of AWS KMS with an AWS SDK
+opensearch_scenario,OpenSearch Service,Basics,Learn OpenSearch Service core operations,Learn core operations for Amazon OpenSearch Service using an AWS SDK
+redshift_scenario,Amazon Redshift,Basics,Learn the basics,Learn the basics of Amazon Redshift with an AWS SDK
+s3_batch,Amazon S3 Control,Basics,Learn the basics,Learn the basics of Amazon S3 Control with an AWS SDK
+s3express_scenario,S3 Directory Buckets,Basics,Learn the basics,Learn the basics of S3 Directory Buckets with an AWS SDK
+sitewise_scenario,AWS IoT Sitewise,Basics,Learn the basics,Learn the basics of AWS IoT SiteWise with an AWS SDK
+ssm_scenario,Systems Manager,Basics,Learn the basics,Learn the basics of Systems Manager with an AWS SDK
