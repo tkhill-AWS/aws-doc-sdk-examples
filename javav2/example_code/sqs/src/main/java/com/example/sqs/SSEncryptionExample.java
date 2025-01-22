@@ -5,14 +5,16 @@ package com.example.sqs;
 
 // snippet-start:[sqs.java2.sqs_sse_example.main]
 // snippet-start:[sqs.java2.sqs_sse_example.import]
-import software.amazon.awssdk.regions.Region;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.SetQueueAttributesRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
-import java.util.HashMap;
+
+import java.util.Map;
 // snippet-end:[sqs.java2.sqs_sse_example.import]
 
 /**
@@ -24,33 +26,23 @@ import java.util.HashMap;
  * https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html
  */
 public class SSEncryptionExample {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SSEncryptionExample.class);
+    static final String STACK_NAME = "sqs-sse-example-stack";
+    static final String CFN_TEMPLATE_FILE_NAME = "cfn_template.yaml";
+
     public static void main(String[] args) {
-        final String usage = """
+        CloudFormationHelper.deployCloudFormationStack(
+                STACK_NAME, CFN_TEMPLATE_FILE_NAME);
+        final Map<String, String> stackOutputs = CloudFormationHelper.getStackOutputs(STACK_NAME);
 
-                Usage:    <queueName> <kmsMasterKeyAlias>\s
-
-                Where:
-                   queueName - The name of the queue.
-                   kmsMasterKeyAlias - The alias of the AWS managed CMK for Amazon SQS.\s
-                   """;
-
-        if (args.length != 2) {
-            System.out.println(usage);
-            System.exit(1);
-        }
-
-        String queueName = args[0];
-        String kmsMasterKeyAlias = args[1];
-        SqsClient sqsClient = SqsClient.builder()
-                .region(Region.US_WEST_2)
-                .build();
-
-        setEncryption(sqsClient, queueName, kmsMasterKeyAlias);
-        sqsClient.close();
+        String queueName = stackOutputs.get("QueueName");
+        String kmsMasterKeyAlias = stackOutputs.get("KeyAlias");
+        addEncryption(queueName, kmsMasterKeyAlias);
+        CloudFormationHelper.destroyCloudFormationStack(STACK_NAME);
     }
-
-    public static void setEncryption(SqsClient sqsClient, String queueName, String kmsMasterKeyAlias) {
-        try {
+    // snippet-start:[sqs.java2.sqs_sse_example.add-encryption-method]
+    public static void addEncryption(String queueName, String kmsMasterKeyAlias) {
+            SqsClient sqsClient = SqsClient.create();
             GetQueueUrlRequest urlRequest = GetQueueUrlRequest.builder()
                     .queueName(queueName)
                     .build();
@@ -58,22 +50,25 @@ public class SSEncryptionExample {
             GetQueueUrlResponse getQueueUrlResponse = sqsClient.getQueueUrl(urlRequest);
             String queueUrl = getQueueUrlResponse.queueUrl();
 
-            HashMap<QueueAttributeName, String> attributes = new HashMap<>();
-            attributes.put(QueueAttributeName.KMS_MASTER_KEY_ID, kmsMasterKeyAlias);
-            attributes.put(QueueAttributeName.KMS_DATA_KEY_REUSE_PERIOD_SECONDS, "140");
+
+            Map<QueueAttributeName, String> attributes = Map.of(
+            QueueAttributeName.KMS_MASTER_KEY_ID, kmsMasterKeyAlias,
+            QueueAttributeName.KMS_DATA_KEY_REUSE_PERIOD_SECONDS, "140"
+            );
 
             SetQueueAttributesRequest attRequest = SetQueueAttributesRequest.builder()
                     .queueUrl(queueUrl)
                     .attributes(attributes)
                     .build();
-
+        try {
             sqsClient.setQueueAttributes(attRequest);
-            System.out.println("The attributes have been applied to " + queueName);
-
+            LOGGER.info("The attributes have been applied to {}", queueName);
         } catch (SqsException e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            sqsClient.close();
         }
     }
+    // snippet-end:[sqs.java2.sqs_sse_example.add-encryption-method]
 }
 // snippet-end:[sqs.java2.sqs_sse_example.main]
