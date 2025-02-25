@@ -27,7 +27,11 @@ Resources:
   MyKeyAlias1B45D9DA:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/MY_KEY6c641118-a904-40d5-b79d-506a4a5940a9
+      AliasName:
+        Fn::Join:
+          - ""
+          - - alias/
+            - Ref: MyKey6AB29FA6
       TargetKeyId:
         Fn::GetAtt:
           - MyKey6AB29FA6
@@ -36,8 +40,6 @@ Resources:
       aws:cdk:path: KmsQueueStack/MyKey/Alias/Resource
   MyQueueE6CA6235:
     Type: AWS::SQS::Queue
-    Properties:
-      QueueName: sse-kms-examples-queued6434087-9fc0-449b-a024-e7bad2d9715c
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
     Metadata:
@@ -52,10 +54,14 @@ Resources:
 Outputs:
   KeyAlias:
     Description: The key alias
-    Value: alias/MY_KEY6c641118-a904-40d5-b79d-506a4a5940a9
+    Value:
+      Ref: MyKeyAlias1B45D9DA
   QueueName:
     Description: The queue name
-    Value: sse-kms-examples-queued6434087-9fc0-449b-a024-e7bad2d9715c
+    Value:
+      Fn::GetAtt:
+        - MyQueueE6CA6235
+        - QueueName
 Conditions:
   CDKMetadataAvailable:
     Fn::Or:
@@ -139,17 +145,4 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /cdk-bootstrap/hnb659fds/version
     Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
-Rules:
-  CheckBootstrapVersion:
-    Assertions:
-      - Assert:
-          Fn::Not:
-            - Fn::Contains:
-                - - "1"
-                  - "2"
-                  - "3"
-                  - "4"
-                  - "5"
-                - Ref: BootstrapVersion
-        AssertDescription: CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.
 

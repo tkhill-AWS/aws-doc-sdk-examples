@@ -18,12 +18,11 @@ import java.util.Map;
 // snippet-end:[sqs.java2.sqs_sse_example.import]
 
 /**
- * Before running this Java V2 code example, set up your development
- * environment, including your credentials.
+ * <p>Before running this Java V2 code example, set up your development
+ * environment, including your credentials.</p>
  *
- * For more information, see the following documentation topic:
- *
- * https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html
+ * <p>For more information, see the following documentation topic:<br/>
+ * <a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html">Get started with the AWS SDK for Java 2.x</a>.</a></p>
  */
 public class SSEncryptionExample {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSEncryptionExample.class);
@@ -43,6 +42,7 @@ public class SSEncryptionExample {
     // snippet-start:[sqs.java2.sqs_sse_example.add-encryption-method]
     public static void addEncryption(String queueName, String kmsMasterKeyAlias) {
             SqsClient sqsClient = SqsClient.create();
+
             GetQueueUrlRequest urlRequest = GetQueueUrlRequest.builder()
                     .queueName(queueName)
                     .build();
