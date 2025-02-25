@@ -32,7 +32,7 @@ public class TagExamples {
         }
     }
 
-    // snippet-start:[sqs.java2.add-tags-method]
+    // snippet-start:[sqs.java2.add-tags]
     public static void addTags(String queueUrl) {
         // Build a map of the tags.
         final Map<String, String> tagsToAdd = Map.of(
@@ -46,7 +46,8 @@ public class TagExamples {
                 .tags(tagsToAdd)
         );
     }
-
+    // snippet-end:[sqs.java2.add-tags]
+    // snippet-start:[sqs.java2.list-tags]
     public static void listTags(String queueUrl) {
         // Call the listQueueTags method with a Consumer<ListQueueTagsRequest.Builder> parameter that creates a ListQueueTagsRequest.
         ListQueueTagsResponse response = sqsClient.listQueueTags(b -> b
@@ -57,7 +58,8 @@ public class TagExamples {
                 .forEach((k, v) ->
                         LOGGER.info("Key: {} -> Value: {}", k, v));
     }
-
+    // snippet-end:[sqs.java2.list-tags]
+    // snippet-start:[sqs.java2.remove-tags]
     public static void removeTags(String queueUrl) {
         // Call the untagQueue method with a Consumer<UntagQueueRequest.Builder> parameter.
         sqsClient.untagQueue(b -> b
@@ -66,4 +68,5 @@ public class TagExamples {
         );
     }
 }
+// snippet-start:[sqs.java2.remove-tags]
 // snippet-end:[sqs.java2.tag-examples]
