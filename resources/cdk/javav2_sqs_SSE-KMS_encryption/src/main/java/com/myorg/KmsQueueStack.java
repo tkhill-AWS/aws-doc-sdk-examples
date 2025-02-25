@@ -8,6 +8,7 @@ import software.amazon.awscdk.StackProps;
 import software.amazon.awscdk.services.iam.AccountRootPrincipal;
 import software.amazon.awscdk.services.iam.PolicyDocument;
 import software.amazon.awscdk.services.iam.PolicyStatement;
+import software.amazon.awscdk.services.kms.Alias;
 import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.kms.KeySpec;
 import software.amazon.awscdk.services.kms.KeyUsage;
@@ -15,7 +16,6 @@ import software.amazon.awscdk.services.sqs.Queue;
 import software.constructs.Construct;
 
 import java.util.List;
-import java.util.UUID;
 
 
 public class KmsQueueStack extends Stack {
@@ -26,9 +26,8 @@ public class KmsQueueStack extends Stack {
     public KmsQueueStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        String keyAlias = "alias/MY_KEY" + UUID.randomUUID();
-        Key.Builder.create(this, "MyKey")
-                .alias(keyAlias)
+        Key myKey = Key.Builder.create(this, "MyKey")
+                .alias(null)
                 .keyUsage(KeyUsage.ENCRYPT_DECRYPT)
                 .keySpec(KeySpec.SYMMETRIC_DEFAULT)
                 .removalPolicy(RemovalPolicy.DESTROY)
@@ -46,20 +45,21 @@ public class KmsQueueStack extends Stack {
                         ).build()
                 ).build();
 
-        String queueName = "sse-kms-examples-queue" + UUID.randomUUID();
-        Queue.Builder.create(this, "MyQueue")
-                .queueName(queueName)
+        Alias keyAlias = myKey.addAlias("alias/" + myKey.getKeyId());
+
+        Queue myQueue = Queue.Builder.create(this, "MyQueue")
+                .queueName(null)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
         CfnOutput.Builder.create(this, "KeyAlias")
                 .description("The key alias")
-                .value(keyAlias)
+                .value(keyAlias.getAliasName())
                 .build();
 
         CfnOutput.Builder.create(this, "QueueName")
                 .description("The queue name")
-                .value(queueName)
+                .value(myQueue.getQueueName())
                 .build();
     }
 }
