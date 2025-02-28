@@ -12,7 +12,7 @@
         </Root>
         <Logger name="software.amazon.awssdk" level="WARN"/>
         <Logger name="software.amazon.awssdk.request" level="INFO"/>
-        <Logger name="org.apache.http.wire" level="DEBUG"/>
+        <Logger name="org.apache.http.wire" level="INFO"/>
         <Logger name="com.example.sqs" level="INFO"/>
     </Loggers>
 </Configuration>
