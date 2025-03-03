@@ -4,6 +4,7 @@
 package com.example.sqs;
 
 // snippet-start:[sqs.java2.message_attributes.import]
+
 import org.slf4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
@@ -30,8 +31,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 // snippet-end:[sqs.java2.message_attributes.import]
 
 /**
- * Before running this Java V2 code example, set up your development environment, including your credentials.
- * For more information, see the <a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html">AWS SDK for Java Developer Guide</a>.
+ * Before running this Java V2 code example, set up your development environment, including your credentials. For more
+ * information, see the <a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html">AWS
+ * SDK for Java Developer Guide</a>.
  */
 // snippet-start:[sqs.java2.message_attributes.main]
 public class MessageAttributesExample {
@@ -59,6 +61,8 @@ public class MessageAttributesExample {
                 LOGGER.info("Queue successfully deleted. Program ending.");
             } catch (RuntimeException e) {
                 LOGGER.error("Program ending.");
+            } finally {
+                SQS_CLIENT.close();
             }
         }
     }
@@ -66,17 +70,19 @@ public class MessageAttributesExample {
 // snippet-start:[sqs.java2.message_attributes.create]
     /**
      * <p>This method demonstrates how to add message attributes to a message.
-     * Each attribute must specify a name, value, and data type. You use a Java Map
-     * to supply the attributes. The map's key is the attribute name, and you specify
-     * the map's entry value using a builder that includes the attribute value and data type.</p>
+     * Each attribute must specify a name, value, and data type. You use a Java Map to supply the attributes. The map's
+     * key is the attribute name, and you specify the map's entry value using a builder that includes the attribute
+     * value and data type.</p>
      *
      * <p>The data type must start with one of "String", "Number" or "Binary". You can optionally
      * define a custom extension by using a "." and your extension.</p>
      *
-     * <p>The SQS Developer Guide provides more information on @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-metadata.html#sqs-message-attributes">message attributes</a>.</p>
+     * <p>The SQS Developer Guide provides more information on @see <a
+     * href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-metadata.html#sqs-message-attributes">message
+     * attributes</a>.</p>
      *
      * @param thumbailPath Filesystem path of the image.
-     * @param queueUrl URL of the SQS queue.
+     * @param queueUrl     URL of the SQS queue.
      */
     static void sendMessageWithAttributes(Path thumbailPath, String queueUrl) {
         Map<String, MessageAttributeValue> messageAttributeMap = null;
