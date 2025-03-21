@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package com.example.sqs.jms.stdqueue;
 
 import com.example.sqs.jms.SqsJmsExampleUtils;
@@ -11,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
-class SyncMessageReceiverClientAcknowledgeTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SyncMessageReceiverClientAcknowledgeTest.class);
+class SyncMessageReceiverClientAckTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SyncMessageReceiverClientAckTest.class);
 
     @AfterEach
     void tearDown() throws JMSException {
