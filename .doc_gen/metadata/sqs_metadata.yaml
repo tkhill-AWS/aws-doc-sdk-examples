@@ -1146,49 +1146,49 @@ sqs_Scenario_UseJMS:
                 The following examples work with standard &SQS queues and include:</para>
                 <orderedlist>
                     <listitem>
-                        <para>Sending a text message</para>
+                        <para>Sending a text message.</para>
                     </listitem>
                     <listitem>
-                        <para>Receiving messages synchronously</para>
+                        <para>Receiving messages synchronously.</para>
                     </listitem>
                     <listitem>
-                        <para>Receiving messages asynchronously</para>
+                        <para>Receiving messages asynchronously.</para>
                     </listitem>
                     <listitem>
-                        <para>Receiving messages using CLIENT_ACKNOWLEDGE mode</para>
+                        <para>Receiving messages using CLIENT_ACKNOWLEDGE mode.</para>
                     </listitem>
                     <listitem>
-                        <para>Receiving messages using the UNORDERED_ACKNOWLEDGE mode</para>
+                        <para>Receiving messages using the UNORDERED_ACKNOWLEDGE mode.</para>
                     </listitem>
                     <listitem>
-                        <para>Using Spring to inject dependencies</para>
+                        <para>Using Spring to inject dependencies.</para>
                     </listitem>
                     <listitem>
-                        <para>A utility class that provides common methods used by the other examples</para>
+                        <para>A utility class that provides common methods used by the other examples.</para>
                     </listitem>
                 </orderedlist>
-                <para>1. Sending a text message
+                <para>1. Sending a text message.
               snippet_tags:
                 - sqs-jms.java2.send-text-message
-            - description: 2. Receiving messages synchronously
+            - description: 2. Receiving messages synchronously.
               snippet_tags:
                 - sqs-jms.java2.receive-message-sync
-            - description: 3. Receiving messages asynchronously
+            - description: 3. Receiving messages asynchronously.
               snippet_tags:
                 - sqs-jms.java2.receive-message-async
-            - description: Receiving messages using CLIENT_ACKNOWLEDGE mode
+            - description: Receiving messages using CLIENT_ACKNOWLEDGE mode.
               snippet_tags:
                 - sqs-jms.java2.receive-message-sync-client-ack
-            - description: 5. Receiving messages using the UNORDERED_ACKNOWLEDGE mode
+            - description: 5. Receiving messages using the UNORDERED_ACKNOWLEDGE mode.
               snippet_tags:
                 - sqs-jms.java2.receive-message-sync-unordered-ack
-            - description: 6. Using Spring to inject dependencies
+            - description: 6. Using Spring to inject dependencies.
               snippet_tags:
                 - sqs-jms.java2.spring
-            - description: Spring bean definitions
+            - description: Spring bean definitions.
               snippet_files:
                 javav2/example_code/sqs-jms/src/main/resources/SpringExampleConfiguration.xml:
-            - description: 7. A utility class that provides common methods used by the other examples
+            - description: 7. A utility class that provides common methods used by the other examples.
               snippet_files:
                 - javav2/example_code/sqs-jms/src/main/java/com/example/sqs/jms/SqsJmsExampleUtils.java
 
