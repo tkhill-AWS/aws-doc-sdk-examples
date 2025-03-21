@@ -1144,7 +1144,7 @@ sqs_Scenario_UseJMS:
           excerpts:
             - description: >-
                 The following examples work with standard &SQS queues and include:</para>
-                <orderedlist>
+                <itemizedlist>
                     <listitem>
                         <para>Sending a text message.</para>
                     </listitem>
@@ -1166,7 +1166,7 @@ sqs_Scenario_UseJMS:
                     <listitem>
                         <para>A utility class that provides common methods used by the other examples.</para>
                     </listitem>
-                </orderedlist>
+                </itemizedlist>
                 <para>Sending a text message.
               snippet_tags:
                 - sqs-jms.java2.send-text-message
