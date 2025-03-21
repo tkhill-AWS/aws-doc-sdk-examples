@@ -1191,6 +1191,5 @@ sqs_Scenario_UseJMS:
             - description: A utility class that provides common methods used by the other examples.
               snippet_files:
                 - javav2/example_code/sqs-jms/src/main/java/com/example/sqs/jms/SqsJmsExampleUtils.java
-
   services:
     sqs: {CreateQueue, DeleteQueue}
