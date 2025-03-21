@@ -98,6 +98,6 @@ public class SyncMessageReceiver {
             LOGGER.error("Error receiving from SQS: {}", e.getMessage(), e);
         }
     }
-    // snippet-start:[sqs-jms.java2.receive-message-sync]
+    // snippet-end:[sqs-jms.java2.receive-message-sync]
 
 }

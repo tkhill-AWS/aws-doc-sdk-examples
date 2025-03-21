@@ -1130,3 +1130,20 @@ sqs_Scenario_WorkWithTags:
                 - sqs.java2.tag-examples
   services:
     sqs: {TagQueue, ListQueueTags, UntagQueue}
+sqs_Scenario_UseJMS:
+  title: Use the &SQS; Java Messaging Library. Work with queue tags and &SQS; using an &AWS; SDK
+  title_abbrev: Work with queue tags
+  synopsis: perform tagging operation with &SQS;
+  category: Scenarios
+  languages:
+    Java:
+      versions:
+        - sdk_version: 2
+          github: javav2/example_code/sqs
+          sdkguide:
+          excerpts:
+            - description: The following example creates tags for a queue, lists tags, and removes a tag.
+              snippet_tags:
+                - sqs.java2.tag-examples
+  services:
+    sqs: {TagQueue, ListQueueTags, UntagQueue}
